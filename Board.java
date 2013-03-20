@@ -13,14 +13,14 @@ import com.google.common.primitives.Ints;
 
 public class Board {
 
-    int[] board = new int[9 * 9];
+    int[][] board = new int[9][9];
     List<Integer> freeIndexes = new ArrayList<Integer>();
 
     public Board(final String name) {
         try {
             Scanner s = new Scanner(new File(name).getAbsoluteFile());
-            for (int i = 0; s.hasNext();) {
-                board[i++] = s.nextInt();
+            for (int i = 0; s.hasNext(); i++) {
+                board[i / 9][i % 9] = s.nextInt();
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -28,16 +28,18 @@ public class Board {
     }
 
     private void initFreeIndexes() {
-        for (int i = 0; i < board.length; i++) {
-            if (board[i] == 0) {
-                freeIndexes.add(i);
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (board[i][j] == 0) {
+                    freeIndexes.add(i * 9 + j);
+                }
             }
         }
     }
 
-    private void print(final int[] board) {
+    private void print(final int[][] board) {
         String str = Joiner.on((char) Ascii.CR).join(
-                Splitter.fixedLength(9 + 3).split(Joiner.on("|").join(Splitter.fixedLength(3).split(Ints.join("", board)))));
+                Splitter.fixedLength(9 + 3).split(Joiner.on("|").join(Splitter.fixedLength(3).split(Ints.join("", Ints.concat(board))))));
         System.out.println(str);
     }
 
@@ -46,17 +48,18 @@ public class Board {
     }
 
     public void printResult() {
-        int[] boardCopy = board;
+        int[][] boardCopy = board;
         initFreeIndexes();
         for (int i = 0; i < freeIndexes.size(); i++) {
-            int j = board[freeIndexes.get(i)];
+            Integer freeIndex = freeIndexes.get(i);
+            int j = board[freeIndex / 9][freeIndex % 9];
             do {
                 if (j == 9) {
-                    board[freeIndexes.get(i)] = 0;
+                    board[freeIndex / 9][freeIndex % 9] = 0;
                     i = i - 2;
                     break;
                 }
-                board[freeIndexes.get(i)] = ++j;
+                board[freeIndex / 9][freeIndex % 9] = ++j;
             } while (violates());
         }
         print(board);
@@ -67,8 +70,8 @@ public class Board {
         for (int i = 0; i < 9; i++) {
             Set<Integer> values = new HashSet<Integer>();
             for (int j = 0; j < 9; j++) {
-                if (board[i * 9 + j] != 0) {
-                    boolean contained = !values.add(board[i * 9 + j]);
+                if (board[i][j] != 0) {
+                    boolean contained = !values.add(board[i][j]);
                     if (contained) {
                         return true;
                     }
@@ -78,10 +81,25 @@ public class Board {
         for (int i = 0; i < 9; i++) {
             Set<Integer> values = new HashSet<Integer>();
             for (int j = 0; j < 9; j++) {
-                if (board[i + j * 9] != 0) {
-                    boolean contained = !values.add(board[i + j * 9]);
+                if (board[j][i] != 0) {
+                    boolean contained = !values.add(board[j][i]);
                     if (contained) {
                         return true;
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                Set<Integer> values = new HashSet<Integer>();
+                for (int k = 0; k < 3; k++) {
+                    for (int l = 0; l < 3; l++) {
+                        if (board[i * 3 + k][j * 3 + l] != 0) {
+                            boolean contained = !values.add(board[i * 3 + k][j * 3 + l]);
+                            if (contained) {
+                                return true;
+                            }
+                        }
                     }
                 }
             }
